@@ -13,6 +13,7 @@ import (
 
 	"github.com/daeuniverse/outbound/netproxy"
 	dnsmessage "github.com/miekg/dns"
+	"github.com/sirupsen/logrus"
 )
 
 type Ip46 struct {
@@ -20,16 +21,16 @@ type Ip46 struct {
 	Ip6 netip.Addr
 }
 
-
-func ResolveIp46(ctx context.Context, dialer netproxy.Dialer, dns netip.AddrPort, host string, network string, race bool) (ipv46 *Ip46, err error) {
-	defer func() {
-		if err == nil {
-			logger.Tracef("ResolveIp46 %v using %v: A(%v) AAAA(%v)", host, systemDns, ipv46.Ip4, ipv46.Ip6)
-		} else {
-			logger.Tracef("ResolveIp46 %v using %v: %v", host, systemDns, err)
-		}
-	}()
-
+func ResolveIp46(ctx context.Context, dialer netproxy.Dialer, dns netip.AddrPort, host string, network string, race bool) (ipv46 *Ip46, err4, err6 error) {
+	var log *logrus.Logger
+	if _log := ctx.Value("logger"); _log != nil {
+		log = _log.(*logrus.Logger)
+		defer func() {
+			log.WithField("err4", err4).
+				WithField("err6", err6).
+				Tracef("ResolveIp46 %v using %v: A(%v) AAAA(%v)", host, systemDns, ipv46.Ip4, ipv46.Ip6)
+		}()
+	}
 	var wg sync.WaitGroup
 	wg.Add(2)
 	var addrs4, addrs6 []netip.Addr
