@@ -220,9 +220,7 @@ func NewControlPlane(
 		}
 		global.LanInterface = common.Deduplicate(global.LanInterface)
 		for _, ifname := range global.LanInterface {
-			if err = core.bindLan(ifname, global.AutoConfigKernelParameter); err != nil {
-				return nil, fmt.Errorf("bindLan: %v: %w", ifname, err)
-			}
+			core.bindLan(ifname, global.AutoConfigKernelParameter)
 		}
 	}
 	// Bind to WAN
@@ -249,9 +247,7 @@ func NewControlPlane(
 					}
 				}
 			}
-			if err = core.bindWan(ifname, global.AutoConfigKernelParameter); err != nil {
-				return nil, fmt.Errorf("bindWan: %v: %w", ifname, err)
-			}
+			core.bindWan(ifname, global.AutoConfigKernelParameter)
 		}
 	}
 	// Bind to dae0 and dae0peer
@@ -662,7 +658,7 @@ func (c *ControlPlane) ChooseDialTarget(outbound consts.OutboundIndex, dst netip
 					// TODO: use DNS controller and re-route by control plane.
 					systemDns, err := netutils.SystemDns()
 					if err == nil {
-						if ip46, err := netutils.ResolveIp46(ctx, direct.SymmetricDirect, systemDns, domain, common.MagicNetwork("udp", c.soMarkFromDae, c.mptcp), true); err == nil && (ip46.Ip4.IsValid() || ip46.Ip6.IsValid()) {
+						if ip46, _, _ := netutils.ResolveIp46(ctx, direct.SymmetricDirect, systemDns, domain, common.MagicNetwork("udp", c.soMarkFromDae, c.mptcp), true); ip46.Ip4.IsValid() || ip46.Ip6.IsValid() {
 							// Has A/AAAA records. It is a real domain.
 							dialMode = consts.DialMode_Domain
 							// Add it to real-domain set.

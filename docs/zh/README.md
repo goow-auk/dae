@@ -60,8 +60,16 @@ CONFIG_BPF_EVENTS=y
 
 你可以通过以下命令检查他们：
 
+bash和其他POSIX兼容的shell:
+
 ```shell
 (zcat /proc/config.gz || cat /boot/{config,config-$(uname -r)}) | grep -E 'CONFIG_(DEBUG_INFO|DEBUG_INFO_BTF|KPROBES|KPROBE_EVENTS|BPF|BPF_SYSCALL|BPF_JIT|BPF_STREAM_PARSER|NET_CLS_ACT|NET_SCH_INGRESS|NET_INGRESS|NET_EGRESS|NET_CLS_BPF|BPF_EVENTS|CGROUPS)=|# CONFIG_DEBUG_INFO_REDUCED is not set'
+```
+
+fish shell:
+
+```fish
+begin; zcat /proc/config.gz || bat /boot/config "/boot/config-"(uname -r); end | grep -E 'CONFIG_(DEBUG_INFO|DEBUG_INFO_BTF|KPROBES|KPROBE_EVENTS|BPF|BPF_SYSCALL|BPF_JIT|BPF_STREAM_PARSER|NET_CLS_ACT|NET_SCH_INGRESS|NET_INGRESS|NET_EGRESS|NET_CLS_BPF|BPF_EVENTS|CGROUPS)=|# CONFIG_DEBUG_INFO_REDUCED is not set'
 ```
 
 > **注意**: `Armbian` 用户可以参考 [**Upgrade Guide**](../en/user-guide/kernel-upgrade.md) 升级到支持的内核。
@@ -76,7 +84,13 @@ dae 已发布于 [AUR](https://aur.archlinux.org/packages/dae) 和 [archlinuxcn]
 
 #### AUR
 
-##### 最新稳定版
+##### 最新稳定版 (针对 x86-64 v3 / AVX2 优化)
+
+```shell
+[yay/paru] -S dae-avx2-bin
+```
+
+##### 最新稳定版 (x86-64 或 aarch64 通用版)
 
 ```shell
 [yay/paru] -S dae
@@ -90,10 +104,10 @@ dae 已发布于 [AUR](https://aur.archlinux.org/packages/dae) 和 [archlinuxcn]
 
 #### archlinuxcn
 
-##### 最新稳定版 (针对 x86-64 v3 优化)
+##### 最新稳定版 (针对 x86-64 v3 / AVX2 优化)
 
 ```shell
-sudo pacman -S dae-bin-x64-v3
+sudo pacman -S dae-avx2-bin
 ```
 
 ##### 最新稳定版 (x86-64 或 aarch64 通用版)

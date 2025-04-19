@@ -8,7 +8,6 @@ package netutils
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net/netip"
 	"sync"
 
@@ -21,6 +20,7 @@ type Ip46 struct {
 	Ip6 netip.Addr
 }
 
+
 func ResolveIp46(ctx context.Context, dialer netproxy.Dialer, dns netip.AddrPort, host string, network string, race bool) (ipv46 *Ip46, err error) {
 	defer func() {
 		if err == nil {
@@ -29,12 +29,13 @@ func ResolveIp46(ctx context.Context, dialer netproxy.Dialer, dns netip.AddrPort
 			logger.Tracef("ResolveIp46 %v using %v: %v", host, systemDns, err)
 		}
 	}()
+
 	var wg sync.WaitGroup
 	wg.Add(2)
-	var err4, err6 error
 	var addrs4, addrs6 []netip.Addr
 	ctx4, cancel4 := context.WithCancel(ctx)
 	ctx6, cancel6 := context.WithCancel(ctx)
+	var _err4, _err6 error
 	go func() {
 		defer func() {
 			wg.Done()
@@ -45,12 +46,9 @@ func ResolveIp46(ctx context.Context, dialer netproxy.Dialer, dns netip.AddrPort
 		}()
 		var e error
 		addrs4, e = ResolveNetip(ctx4, dialer, dns, host, dnsmessage.TypeA, network)
-		if err != nil && !errors.Is(e, context.Canceled) {
-			err4 = e
+		if e != nil && !errors.Is(e, context.Canceled) {
+			_err4 = e
 			return
-		}
-		if len(addrs4) == 0 {
-			addrs4 = []netip.Addr{{}}
 		}
 	}()
 	go func() {
@@ -63,27 +61,18 @@ func ResolveIp46(ctx context.Context, dialer netproxy.Dialer, dns netip.AddrPort
 		}()
 		var e error
 		addrs6, e = ResolveNetip(ctx6, dialer, dns, host, dnsmessage.TypeAAAA, network)
-		if err != nil && !errors.Is(e, context.Canceled) {
+		if e != nil && !errors.Is(e, context.Canceled) {
 			err6 = e
 			return
 		}
-		if len(addrs6) == 0 {
-			addrs6 = []netip.Addr{{}}
-		}
 	}()
 	wg.Wait()
-	if err4 != nil || err6 != nil {
-		if err4 != nil && err6 != nil {
-			return nil, fmt.Errorf("%w: %v", err4, err6)
-		}
-		if err4 != nil {
-			return nil, err4
-		} else {
-			return nil, err6
-		}
+	ipv46 = &Ip46{}
+	if len(addrs4) != 0 {
+		ipv46.Ip4 = addrs4[0]
 	}
-	return &Ip46{
-		Ip4: addrs4[0],
-		Ip6: addrs6[0],
-	}, nil
+	if len(addrs6) != 0 {
+		ipv46.Ip6 = addrs6[0]
+	}
+	return ipv46, _err4, _err6
 }
